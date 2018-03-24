@@ -12,7 +12,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import tool.compress.ZLib;
-import tool.function.FunctionUtils;
 
 public class ZlibFileTranscoder extends WindowBase {
 	public static void main(String[] args) {
@@ -29,24 +28,31 @@ public class ZlibFileTranscoder extends WindowBase {
 		pane.setOnDragDropped(ev -> {
 			Dragboard dragboard = ev.getDragboard();
 			if (dragboard.hasFiles()) {
-				dragboard.getFiles().forEach(this::unpackFile);
+				dragboard.getFiles()
+						.forEach(file -> {
+							Thread unpackFileThread = new Thread(() -> {
+								this.unpackFile(file);
+							});
+							unpackFileThread.setDaemon(true);
+							unpackFileThread.start();
+						});
 			}
 		});
 
 		return pane;
 	}
 
-	private void unpackFile(File file) {
+	private void unpackFile(File sourceFile) {
+		Path source = sourceFile.toPath();
+		Path root = source.getParent();
+		Path target = root.resolve("unpack");
 		try {
-			Path source = file.toPath();
-			Path root = source.getParent();
-			Path target = root.resolve("unpack");
 			Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					try {
 						byte[] bytes = Files.readAllBytes(file);
-						bytes = FunctionUtils.ifFunction(ZLib.decompress(bytes), FunctionUtils::isNotNull, FunctionUtils::returnSelf, bytes);
+						bytes = ZLib.decompressOptional(bytes).orElse(bytes);
 
 						String exten;
 						switch (String.format("%d%d", Byte.toUnsignedInt(bytes[0]), Byte.toUnsignedInt(bytes[1]))) {

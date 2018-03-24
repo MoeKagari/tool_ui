@@ -21,6 +21,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import tool.FXUtils;
 import tool.function.FunctionUtils;
 
 public class TextTranscoder extends WindowBase {
@@ -54,7 +55,7 @@ public class TextTranscoder extends WindowBase {
 						try {
 							Files.write(targetFile.toPath(), content.getBytes(this.combo.getValue().charsetName));
 						} catch (IOException ex) {
-							WindowBase.showExceptionDialog(ex);
+							FXUtils.showExceptionDialog(ex);
 						}
 					});
 				}
@@ -94,14 +95,9 @@ public class TextTranscoder extends WindowBase {
 				this.text.setText(new String(Files.readAllBytes(this.file.toPath()), this.combo.getValue().charsetName));
 			} catch (IOException ex) {
 				this.text.setText("");
-				WindowBase.showExceptionDialog(ex);
+				FXUtils.showExceptionDialog(ex);
 			}
 		}
-	}
-
-	@Override
-	public String defaultTitle() {
-		return "文本转码器";
 	}
 
 	private enum Charset {
